@@ -82,7 +82,7 @@ function handler(request, ws) {
       message += `${page.page_name}:${page.html_url}\n`;
     }
   } else {
-    message = `Github event "${eventType}" is not implemented.`;
+    logger.warn(`Github event "${eventType}" is not implemented.`);
   }
   if (message) {
     message = message.trim();
