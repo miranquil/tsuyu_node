@@ -16,7 +16,7 @@ function handler(session) {
       });
       const fileIndex = parseInt(Math.random() * imageList.length, 10);
       session.send(
-        `[CQ:image,file=http://0.0.0.0:${config.port}/public/pic-lib/night/${imageList[fileIndex]}]`);
+        `[CQ:image,file=http://${config.ip}:${config.port}/public/pic-lib/night/${imageList[fileIndex]}]`);
     }
   });
 }

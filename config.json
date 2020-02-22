@@ -1,6 +1,7 @@
 {
   "host": "0.0.0.0",
   "port": 9800,
+  "ip": "127.0.0.1",
   "repoFullName": "yorushika/tsuyu_node",
   "picLibRepoFullName": "yorushika/pic-lib",
   "commandPrefix": [
