@@ -50,6 +50,10 @@ function handler(request, ws) {
     } else if (action === 'deleted') {
       message = `${sender.login} canceled star of ${repo.full_name}`;
     }
+  } else if (eventType === 'watch') {
+    const { sender } = payload;
+    const repo = payload.repository;
+    message = `${sender.login} is watching ${repo.full_name} now`;
   } else if (eventType === 'issues') {
     const { action } = payload;
     const { issue } = payload;
