@@ -109,13 +109,10 @@ async function pullRepo() {
   const s = spawn('sh', [`${process.cwd()}/build.sh`], {
     cwd: `${process.cwd()}`,
   });
-  s.stdout.on('data', (data) => {
-    logger.info(`${data}`);
-  });
   s.stderr.on('data', (data) => {
-    logger.info(`${data}`);
+    logger.error(`${data}`);
   });
-
+  logger.info('Auto re-deploy finished.');
 }
 
 module.exports = {
