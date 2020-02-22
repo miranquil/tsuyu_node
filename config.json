@@ -1,0 +1,11 @@
+{
+  "host": "0.0.0.0",
+  "port": 9800,
+  "commandPrefix": [
+    ".",
+    "-"
+  ],
+  "loggerType": ["std"],
+  "stdOutLogLevel": "debug",
+  "JSONLogLevel": "info"
+}

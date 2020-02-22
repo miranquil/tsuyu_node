@@ -1,3 +1,6 @@
+\.idea/
+test.js
+log.json
 # Logs
 logs
 *.log
