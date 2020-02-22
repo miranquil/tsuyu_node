@@ -1,11 +1,14 @@
 {
   "host": "0.0.0.0",
   "port": 9800,
+  "repoFullName": "yorushika/tsuyu_node",
   "commandPrefix": [
     ".",
     "-"
   ],
-  "loggerType": ["std"],
+  "loggerType": [
+    "std"
+  ],
   "stdOutLogLevel": "debug",
   "JSONLogLevel": "info"
 }

@@ -2,6 +2,7 @@ const api = require('../../lib/api');
 const { logger } = require('../../lib/logger');
 const { get, put } = require('../../lib/database');
 const { spawn } = require('child_process');
+const { config } = require('../../config');
 
 const name = 'GitHub webhook';
 const keyOfUsers = 'githubWebhookBroadcastUsers';
@@ -15,11 +16,14 @@ function handler(request, ws) {
   if (!eventType) {
     return undefined;
   }
+  const repo = payload.repository;
+  if (repo.full_name !== config.repoFullName) {
+    return undefined;
+  }
   if (eventType === 'ping') {
     message = payload.zen;
   } else if (eventType === 'push') {
     const pusherName = payload.pusher.name;
-    const repo = payload.repository;
     message = `New push to ${repo.full_name}\n`;
     message += `Pusher: ${pusherName}\n`;
     message += `Ref ${payload.ref}\n`;
@@ -32,7 +36,6 @@ function handler(request, ws) {
     const { action } = payload;
     const { number } = payload;
     const pr = payload.pull_request;
-    const repo = payload.repository;
     const pusher = pr.user.login;
     if (action === 'opened') {
       message += `${pusher} opened a new pull request to ${repo.full_name}`;
@@ -44,7 +47,6 @@ function handler(request, ws) {
   } else if (eventType === 'star') {
     const { action } = payload;
     const { sender } = payload;
-    const repo = payload.repository;
     if (action === 'created') {
       message = `${sender.login} started ${repo.full_name}`;
     } else if (action === 'deleted') {
@@ -52,13 +54,11 @@ function handler(request, ws) {
     }
   } else if (eventType === 'watch') {
     const { sender } = payload;
-    const repo = payload.repository;
     message = `${sender.login} is watching ${repo.full_name} now`;
   } else if (eventType === 'issues') {
     const { action } = payload;
     const { issue } = payload;
     const { number } = issue;
-    const repo = payload.repository;
     const pusher = issue.user.login;
     if (action === 'opened') {
       message = `${pusher} opened a new issue to ${repo.full_name}\n`;
@@ -71,12 +71,12 @@ function handler(request, ws) {
     message += `Check at ${issue.url}\n`;
   } else if (eventType === 'fork') {
     const { forkee } = payload;
-    const repo = payload.repository;
+
     message = `${forkee.owner.login} forked ${repo.full_name} to ${forkee.full_name}`;
   } else if (eventType === 'gollum') {
     const { pages } = payload;
     const { sender } = payload;
-    const repo = payload.repository;
+
     message = `${sender.login} updated wiki pages of ${repo.full_name}:\n`;
     for (const page of pages) {
       message += `${page.page_name}:${page.html_url}\n`;
