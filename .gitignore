@@ -1,4 +1,5 @@
 \.idea/
+data.db/*
 test.js
 log.json
 # Logs
