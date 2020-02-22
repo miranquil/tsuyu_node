@@ -2,7 +2,7 @@ const api = require('../../lib/api');
 const { logger } = require('../../lib/logger');
 const { get, put } = require('../../lib/database');
 const { spawn } = require('child_process');
-const { config } = require('../../config');
+const config = require('../../config');
 
 const name = 'GitHub webhook';
 const keyOfUsers = 'githubWebhookBroadcastUsers';
