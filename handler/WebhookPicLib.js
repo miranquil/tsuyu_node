@@ -1,15 +1,13 @@
-const { logger } = require('../../lib/logger');
+const { logger } = require('../lib/logger');
 const { spawn } = require('child_process');
-const config = require('../../config');
+const config = require('../config');
+const { WebhookHandler } = require('../lib/type/handler');
 
-const name = 'GitHub webhook';
-const keyOfUsers = 'githubWebhookBroadcastUsers';
-const keyOfGroups = 'githubWebhookBroadcastGroups';
+const name = 'GitHub Pic-lib';
 
-function handler(request, ws) {
+const handler = new WebhookHandler(name, (request, ws) => {
   const payload = request.body;
   const eventType = request.get('X-GitHub-Event');
-  let message = null;
 
   if (!eventType) {
     return undefined;
@@ -22,7 +20,7 @@ function handler(request, ws) {
   if (eventType === 'push') {
     pullRepo();
   }
-}
+});
 
 async function pullRepo() {
   logger.info('Received push from repository, pulling...');
@@ -35,8 +33,4 @@ async function pullRepo() {
   logger.info('Pic-lib updated.');
 }
 
-module.exports = {
-  name,
-  handler,
-  pullRepo,
-};
+module.exports = [handler];
