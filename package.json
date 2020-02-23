@@ -4,6 +4,7 @@
   "description": "Tsuyu QQ bot.",
   "main": "index.js",
   "scripts": {
+    "start": "supervisor index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,7 +14,8 @@
     "express": "^4.17.1",
     "express-ws": "^4.0.0",
     "level": "^6.0.0",
-    "log4js": "^6.1.2"
+    "log4js": "^6.1.2",
+    "supervisor": "^0.12.0"
   },
   "devDependencies": {
     "eslint": "^6.8.0",

@@ -102,9 +102,9 @@ function handler(request, ws) {
       logger.error(error);
     });
 
-    // if (eventType === 'push') {
-    //   pullRepo();
-    // }
+    if (eventType === 'push') {
+      pullRepo();
+    }
   }
 }
 
