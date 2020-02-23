@@ -2,6 +2,7 @@
 data.db/*
 test.js
 log.json
+public/pic-lib/*
 # Logs
 logs
 *.log
