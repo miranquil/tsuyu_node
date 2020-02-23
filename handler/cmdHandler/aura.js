@@ -15,8 +15,10 @@ function handler(session) {
         return !file.startsWith('.');
       });
       const fileIndex = parseInt(Math.random() * imageList.length, 10);
-      session.send(
-        `[CQ:image,file=http://${config.ip}:${config.port}/public/pic-lib/aura/${imageList[fileIndex]}]`);
+      if (imageList[fileIndex]) {
+        session.send(
+          `[CQ:image,file=http://${config.ip}:${config.port}/public/pic-lib/aura/${imageList[fileIndex]}]`);
+      }
     }
   });
 }
