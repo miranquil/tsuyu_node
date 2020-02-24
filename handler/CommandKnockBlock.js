@@ -11,13 +11,13 @@ const blockLeftKey = 'KnockBlockLeft';
 
 // blockCountDb: [group][user]: count
 
-const scheduleTaskAtEight = schedule.scheduleJob('8 * * *', async () => {
-  await db.put(blockLeftKey, []);
-  logger.info('KBR refreshed.');
+const scheduleTaskAtEight = schedule.scheduleJob('0 0 8 * * *', async () => {
+  await db.put(blockLeftKey, {});
+  logger.info('KBR1 refreshed.');
 });
 
-const scheduleTaskAtTwenty = schedule.scheduleJob('20 * * *', async () => {
-  await db.put(blockLeftKey, []);
+const scheduleTaskAtTwenty = schedule.scheduleJob('0 0 20 * * *', async () => {
+  await db.put(blockLeftKey, {});
   logger.info('KBR refreshed.');
 });
 
