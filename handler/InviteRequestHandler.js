@@ -33,14 +33,14 @@ const friendInviteRequestHandler = new RequestHandler('friendInvite',
 
 const groupInviteRequestHandler = new RequestHandler('groupInvite',
   async (session) => {
-    if (session.msgJson.request_type === 'group') {
+    if (session.msgJson.request_type === 'group' && session.msgJson.sub_type === 'invite') {
       const { flag, sub_type, group_id, user_id } = session.msgJson;
       if (admin.indexOf(user_id) !== -1
         || tmpAcceptGroupList.indexOf(group_id) !== -1) {
         api.set_group_add_request(session.ws, flag, sub_type, true);
         logger.info(`Accept group ${group_id} invitation of ${user_id} by admin set.`);
       } else {
-        const approve = await getData(friendInviteAcceptKey);
+        const approve = await getData(groupInviteAcceptKey);
         api.set_group_add_request(session.ws, flag, sub_type, approve);
         if (approve) {
           logger.info(`Accept group ${group_id} invitation of ${user_id} by default.`);
