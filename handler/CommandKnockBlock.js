@@ -125,7 +125,7 @@ const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖', async (sessio
     const ableToGet = await checkRefreshed(groupId, userId);
     const userBlock = await getBlock(groupId, userId);
     if (!ableToGet) {
-      session.send(`你已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
+      session.send(`你今天已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
     } else {
       await addBlock(groupId, userId);
       const userBlock = await getBlock(groupId, userId);
