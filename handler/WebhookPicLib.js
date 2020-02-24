@@ -5,7 +5,7 @@ const { WebhookHandler } = require('../lib/type/handler');
 
 const name = 'GitHub Pic-lib';
 
-const handler = new WebhookHandler(name, (request, ws) => {
+const handler = new WebhookHandler(name, async (request, ws) => {
   const payload = request.body;
   const eventType = request.get('X-GitHub-Event');
 

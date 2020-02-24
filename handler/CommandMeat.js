@@ -4,7 +4,7 @@ const config = require('../config');
 const { CommandHandler } = require('../lib/type/handler');
 
 const handler = new CommandHandler('meat', [], '深夜福利',
-  (session) => {
+  async (session) => {
     fs.readdir('public/pic-lib/night', (err, fileList) => {
       if (err) {
         logger.error(err);

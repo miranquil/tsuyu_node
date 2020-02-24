@@ -1,6 +1,6 @@
 const { CommandHandler } = require('../lib/type/handler');
 
-const ping = new CommandHandler('ping', [], '通信延迟', (session) => {
+const ping = new CommandHandler('ping', [], '通信延迟', async (session) => {
   const timeStamp = Date.now();
   let latency = timeStamp - session.msgJson.time * 1000;
   latency = parseInt(latency, 10);

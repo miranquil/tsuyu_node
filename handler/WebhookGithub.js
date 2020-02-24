@@ -9,7 +9,7 @@ const keyOfUsers = 'githubWebhookBroadcastUsers';
 const keyOfGroups = 'githubWebhookBroadcastGroups';
 
 const handler = new WebhookHandler('GitHub Webhook',
-  (request, ws) => {
+  async (request, ws) => {
     const payload = request.body;
     const eventType = request.get('X-GitHub-Event');
     let message = null;

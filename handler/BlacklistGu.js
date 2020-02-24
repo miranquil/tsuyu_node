@@ -1,6 +1,6 @@
 const { BlackHandler } = require('../lib/type/handler');
 
-const handler = new BlackHandler('咕咕咕', (session) => {
+const handler = new BlackHandler('咕咕咕', async (session) => {
   session.send('汝是何人？');
 });
 

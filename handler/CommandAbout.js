@@ -1,7 +1,7 @@
 const { CommandHandler } = require('../lib/type/handler');
 
 const handler = new CommandHandler('about', [], '关于露儿',
-  (session) => {
+  async (session) => {
     session.send(`这里是露儿3.0，由露娘脱离现有SDK框架重新使用Node.js开发。
 3.0版本将力图提供更轻量化的架构和更快的响应速度，意图进一步提升客制化可能。
 

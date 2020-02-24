@@ -4,7 +4,7 @@ const config = require('../config');
 const { CommandHandler } = require('../lib/type/handler');
 
 const handler = new CommandHandler('aura', [], '云吸龙娘',
-  (session) => {
+  async (session) => {
     fs.readdir('public/pic-lib/aura', (err, fileList) => {
       if (err) {
         logger.error(err);

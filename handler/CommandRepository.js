@@ -3,7 +3,7 @@ const { logger } = require('../lib/logger');
 const { get, put } = require('../lib/database');
 
 const handler = new CommandHandler('repository', ['repo'], '远程存储库事件监听',
-  (session) => {
+  async (session) => {
     if (session.params.length === 0) {
       const message = `远程 Repository 事件监听
     参数：
