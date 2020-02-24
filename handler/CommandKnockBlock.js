@@ -7,49 +7,54 @@ const schedule = require('node-schedule');
 let groupLastUser = {};
 
 const blockCountDbKey = 'KnockBlockCount';
-const refreshFlagKey = 'KnockBlockRefresh';
+const blockLeftKey = 'KnockBlockLeft';
 
 // blockCountDb: [group][user]: count
-// refreshFlag: [group][user]: true/false true: able to obtain
 
-const scheduleTask = schedule.scheduleJob('0 * * *', async () => {
-  await db.put(refreshFlagKey, []);
+const scheduleTaskAtEight = schedule.scheduleJob('8 * * *', async () => {
+  await db.put(blockLeftKey, []);
   logger.info('KBR refreshed.');
 });
 
-async function checkRefreshed(groupId, userId) {
-  let ableToGet = false;
-  const refreshDict = await initRefreshData(groupId, userId);
-  ableToGet = refreshDict[groupId][userId];
-  refreshDict[groupId][userId] = false;
-  await db.put(refreshFlagKey, refreshDict);
-  return ableToGet;
-}
+const scheduleTaskAtTwenty = schedule.scheduleJob('20 * * *', async () => {
+  await db.put(blockLeftKey, []);
+  logger.info('KBR refreshed.');
+});
 
-async function initRefreshData(groupId, userId) {
+async function initBlockLeftData(groupId, userId) {
   try {
-    const refreshDict = await db.get(refreshFlagKey);
-    if (refreshDict[groupId]) {
-      if (refreshDict[groupId][userId] === undefined) {
-        refreshDict[groupId][userId] = true;
+    const blockLeftDict = await db.get(blockLeftKey);
+    if (blockLeftDict[groupId]) {
+      if (blockLeftDict[groupId][userId] === undefined) {
+        blockLeftDict[groupId][userId] = 3;
       }
     } else {
-      refreshDict[groupId] = {};
-      refreshDict[groupId][userId] = true;
+      blockLeftDict[groupId] = {};
+      blockLeftDict[groupId][userId] = 3;
     }
-    await db.put(refreshFlagKey, refreshDict);
-    return refreshDict;
+    await db.put(blockLeftKey, blockLeftDict);
+    return blockLeftDict;
   } catch (e) {
     if (e.notFound) {
-      const refreshDict = {};
-      refreshDict[groupId] = {};
-      refreshDict[groupId][userId] = true;
-      await db.put(refreshFlagKey, refreshDict);
-      return refreshDict;
-    } else {
-      throw e;
+      const blockLeftDict = {};
+      blockLeftDict[groupId] = {};
+      blockLeftDict[groupId][userId] = 3;
+      await db.put(blockLeftKey, blockLeftDict);
+      return blockLeftDict;
     }
+    throw e;
   }
+}
+
+async function getBlockLeft(groupId, userId) {
+  const blockLeftDict = await initBlockLeftData(groupId, userId);
+  return blockLeftDict[groupId][userId];
+}
+
+async function decBlockLeft(groupId, userId) {
+  const blockLeftDict = await initBlockLeftData(groupId, userId);
+  blockLeftDict[groupId][userId] -= 1;
+  await db.put(blockLeftKey, blockLeftDict);
 }
 
 async function initBlockData(groupId, userId) {
@@ -122,47 +127,60 @@ const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖', async (sessio
   const userId = session.user_id;
 
   try {
-    const ableToGet = await checkRefreshed(groupId, userId);
-    const userBlock = await getBlock(groupId, userId);
-    if (!ableToGet) {
-      session.send(`你今天已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
-    } else {
-      await addBlock(groupId, userId);
+    let blockLeft = await getBlockLeft(groupId, userId);
+    if (blockLeft === 0) {
       const userBlock = await getBlock(groupId, userId);
-      session.send(`[CQ:at,qq=${userId}]呐~刚烧好的闷砖🧱\n目前你有${userBlock}块闷砖。`);
+      session.send(
+        `[CQ:at,qq=${userId}] 你的闷砖配额已经用光了！去催獭獭加快进度！\n目前你有${userBlock}块闷砖。`);
+    } else {
+      let userBlock = await getBlock(groupId, userId);
+      if (userBlock === 24) {
+        session.send(`[CQ:at,qq=${userId}] 你背着24块闷砖还不够重吗？敲几块再抽！`);
+      } else {
+        await decBlockLeft(groupId, userId);
+        await addBlock(groupId, userId);
+        userBlock = await getBlock(groupId, userId);
+        blockLeft = await getBlockLeft(groupId, userId);
+        session.send(
+          `[CQ:at,qq=${userId}] 呐~刚烧好的闷砖🧱\n目前你有${userBlock}块闷砖。\n獭獭砖厂剩余配额数：${blockLeft}块。`);
+      }
     }
   } catch (e) {
-    logger.error(e);
     session.send('操作失败');
+    throw e;
   }
 });
 
 const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (session) => {
-  if (session.message_type !== 'group') {
-    return undefined;
-  }
-  const groupId = session.group_id;
-  const userId = session.user_id;
+  try {
+    if (session.message_type !== 'group') {
+      return undefined;
+    }
+    const groupId = session.group_id;
+    const userId = session.user_id;
 
-  const userBlockCount = await getBlock(groupId, userId);
-  if (userBlockCount === 0) {
-    session.send(`[CQ:at,qq=${userId}]你已经没有闷砖了！`);
-  } else {
-    await subBlock(groupId, userId);
-    const targetId = groupLastUser[groupId][0];
-    if (targetId === userId) {
-      session.api.set_group_ban(session.ws, groupId, userId, 60);
-      session.send(`[CQ:at,qq=${userId}]对着自己脑袋狠狠来了一记闷砖！`);
+    const userBlockCount = await getBlock(groupId, userId);
+    if (userBlockCount === 0) {
+      session.send(`[CQ:at,qq=${userId}] 你已经没有闷砖了！`);
     } else {
-      if (parseInt(Math.random() * 10, 10) >= 5) {
+      await subBlock(groupId, userId);
+      const targetId = groupLastUser[groupId][0];
+      if (targetId === userId) {
+        session.api.set_group_ban(session.ws, groupId, userId, 60);
+        session.send(`[CQ:at,qq=${userId}] 对着自己脑袋狠狠来了一记闷砖！`);
+      } else if (parseInt(Math.random() * 10, 10) >= 5) {
         session.api.set_group_ban(session.ws, groupId, targetId, 60);
-        session.send(`[CQ:at,qq=${userId}]对[CQ:at,qq=${targetId}]狠狠来了一记闷砖！`);
+        session.send(`[CQ:at,qq=${userId}] 对 [CQ:at,qq=${targetId}] 狠狠来了一记闷砖！`);
       } else {
         session.api.set_group_ban(session.ws, groupId, userId, 60);
         session.send(
-          `[CQ:at,qq=${userId}]不小心被发现了！被[CQ:at,qq=${targetId}]夺走了闷砖并狠狠来了一记！`);
+          `[CQ:at,qq=${userId}] 不小心被发现了！被 [CQ:at,qq=${targetId}] 夺走了闷砖并狠狠来了一记！`);
       }
     }
+  } catch (e) {
+    session.send('操作失败');
+    throw e;
+
   }
 });
 
