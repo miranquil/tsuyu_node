@@ -12,5 +12,6 @@
     "std"
   ],
   "stdOutLogLevel": "debug",
-  "JSONLogLevel": "info"
+  "JSONLogLevel": "info",
+  "admin": []
 }
