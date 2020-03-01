@@ -2,6 +2,7 @@ const { CommandHandler } = require('../lib/type/handler');
 const { db } = require('../lib/database');
 const { OtherHandler } = require('../lib/type/handler');
 const { logger } = require('../lib/logger');
+const api = require('../lib/api');
 const schedule = require('node-schedule');
 
 let groupLastUser = {};
@@ -162,32 +163,37 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
         session.api.set_group_ban(session.ws, groupId, userId, 60);
         session.send(`[CQ:at,qq=${userId}] 对着自己脑袋狠狠来了一记闷砖！`);
       } else {
-        const rndKey = parseInt(Math.random() * 10, 10);
-        if (rndKey < 1) {
+        const adminFlag = await api.get_group_member_info(groupId, targetId);
+        if (['admin', 'owner'].indexOf(adminFlag.role) !== -1) {
           await subBlock(groupId, userId);
-          session.send(`[CQ:at,qq=${userId}] 不小心手滑了甩飞了闷砖！`);
-        } else if (rndKey < 2) {
-          await subBlock(groupId, userId);
-          await addBlock(groupId, targetId);
-          session.send(
-            `[CQ:at,qq=${userId}] 没抓稳，闷砖掉在地上被 [CQ:at,qq=${targetId}] 捡走了！`);
-        } else if (rndKey < 6) {
-          await subBlock(groupId, userId);
-          session.api.set_group_ban(session.ws, groupId, targetId, 60);
-          session.send(
-            `[CQ:at,qq=${userId}] 对 [CQ:at,qq=${targetId}] 狠狠来了一记闷砖！`);
+          session.send(`[CQ:at,qq=${userId}] 手里的闷砖突然变成了豆腐块！`);
         } else {
-          await subBlock(groupId, userId);
-          session.api.set_group_ban(session.ws, groupId, userId, 60);
-          session.send(
-            `[CQ:at,qq=${userId}] 不小心被发现了！被 [CQ:at,qq=${targetId}] 夺走了闷砖并狠狠来了一记！`);
+          const rndKey = parseInt(Math.random() * 10, 10);
+          if (rndKey < 1) {
+            await subBlock(groupId, userId);
+            session.send(`[CQ:at,qq=${userId}] 不小心手滑了甩飞了闷砖！`);
+          } else if (rndKey < 2) {
+            await subBlock(groupId, userId);
+            await addBlock(groupId, targetId);
+            session.send(
+              `[CQ:at,qq=${userId}] 没抓稳，闷砖掉在地上被 [CQ:at,qq=${targetId}] 捡走了！`);
+          } else if (rndKey < 6) {
+            await subBlock(groupId, userId);
+            session.api.set_group_ban(session.ws, groupId, targetId, 60);
+            session.send(
+              `[CQ:at,qq=${userId}] 对 [CQ:at,qq=${targetId}] 狠狠来了一记闷砖！`);
+          } else {
+            await subBlock(groupId, userId);
+            session.api.set_group_ban(session.ws, groupId, userId, 60);
+            session.send(
+              `[CQ:at,qq=${userId}] 不小心被发现了！被 [CQ:at,qq=${targetId}] 夺走了闷砖并狠狠来了一记！`);
+          }
         }
       }
     }
   } catch (e) {
     session.send('操作失败');
     throw e;
-
   }
 });
 
