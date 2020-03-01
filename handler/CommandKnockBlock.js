@@ -98,6 +98,12 @@ async function subBlock(groupId, userId, number = 1) {
   await db.put(blockCountDbKey, blockDict);
 }
 
+async function setBlock(groupId, userId, number) {
+  const blockDict = await initBlockData(groupId, userId);
+  blockDict[groupId][userId] = number;
+  await db.put(blockCountDbKey, blockDict);
+}
+
 async function getBlock(groupId, userId) {
   const blockDict = await initBlockData(groupId, userId);
   return blockDict[groupId][userId];
@@ -197,4 +203,41 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
   }
 });
 
-module.exports = [cmz, qmz, recordHandler];
+const setBlockCommandHandler = new CommandHandler('set_block', '', '修改闷砖数',
+  async (session) => {
+    if (session.params.length < 2) {
+      session.send(`管理员指令：修改成员闷砖数
+    命令格式：.set_block user_id [group_id] num
+    若无群号参数则默认添加当前群
+    命令并不会检查用户ID和群号的有效性`);
+    } else {
+      let userId;
+      let blockNum;
+      let groupId;
+      if (session.params.length === 2) {
+        userId = parseInt(session.params[0], 10);
+        blockNum = parseInt(session.params[1], 10);
+        groupId = session.group_id;
+      } else {
+        userId = parseInt(session.params[0], 10);
+        groupId = parseInt(session.params[1], 10);
+        blockNum = parseInt(session.params[2], 10);
+      }
+      if (isNaN(blockNum) || isNaN(userId) || isNaN(groupId)) {
+        session.send('非法参数');
+      } else {
+        try {
+          await setBlock(groupId, userId, blockNum);
+        } catch (e) {
+          session.send('操作失败');
+          throw e;
+        }
+        session.send('修改完成');
+      }
+    }
+  })
+;
+
+setBlockCommandHandler.needAdmin = true;
+
+module.exports = [cmz, qmz, recordHandler, setBlockCommandHandler];
