@@ -205,16 +205,19 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
 
 const setBlockCommandHandler = new CommandHandler('set_block', '', '修改闷砖数',
   async (session) => {
-    if (session.params.length < 2) {
+    if (session.params.length === 0) {
       session.send(`管理员指令：修改成员闷砖数
-    命令格式：.set_block user_id [group_id] num
-    若无群号参数则默认添加当前群
+    命令格式：.set_block [user_id] [group_id] num
     命令并不会检查用户ID和群号的有效性`);
     } else {
       let userId;
       let blockNum;
       let groupId;
-      if (session.params.length === 2) {
+      if (session.params.length === 1) {
+        userId = session.user_id;
+        blockNum = parseInt(session.params[0], 10);
+        groupId = session.group_id;
+      } else if (session.params.length === 2) {
         userId = parseInt(session.params[0], 10);
         blockNum = parseInt(session.params[1], 10);
         groupId = session.group_id;
