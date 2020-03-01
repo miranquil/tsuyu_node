@@ -7,23 +7,23 @@ const schedule = require('node-schedule');
 let groupLastUser = {};
 
 const blockCountDbKey = 'KnockBlockCount';
-const blockLeftKey = 'KnockBlockLeft';
+const blockFlagKey = 'KnockBlockLeft';
 
 // blockCountDb: [group][user]: count
 
 const scheduleTaskAtEight = schedule.scheduleJob('0 0 8 * * *', async () => {
-  await db.put(blockLeftKey, {});
+  await db.put(blockFlagKey, {});
   logger.info('KBR1 refreshed.');
 });
 
 const scheduleTaskAtTwenty = schedule.scheduleJob('0 0 20 * * *', async () => {
-  await db.put(blockLeftKey, {});
+  await db.put(blockFlagKey, {});
   logger.info('KBR refreshed.');
 });
 
 async function initBlockLeftData(groupId, userId) {
   try {
-    const blockLeftDict = await db.get(blockLeftKey);
+    const blockLeftDict = await db.get(blockFlagKey);
     if (blockLeftDict[groupId]) {
       if (blockLeftDict[groupId][userId] === undefined) {
         blockLeftDict[groupId][userId] = true;
@@ -32,29 +32,29 @@ async function initBlockLeftData(groupId, userId) {
       blockLeftDict[groupId] = {};
       blockLeftDict[groupId][userId] = true;
     }
-    await db.put(blockLeftKey, blockLeftDict);
+    await db.put(blockFlagKey, blockLeftDict);
     return blockLeftDict;
   } catch (e) {
     if (e.notFound) {
       const blockLeftDict = {};
       blockLeftDict[groupId] = {};
       blockLeftDict[groupId][userId] = true;
-      await db.put(blockLeftKey, blockLeftDict);
+      await db.put(blockFlagKey, blockLeftDict);
       return blockLeftDict;
     }
     throw e;
   }
 }
 
-async function getBlockLeft(groupId, userId) {
+async function getBlockFlag(groupId, userId) {
   const blockLeftDict = await initBlockLeftData(groupId, userId);
   return blockLeftDict[groupId][userId];
 }
 
-async function decBlockLeft(groupId, userId) {
+async function markBlockFlag(groupId, userId, flag = false) {
   const blockLeftDict = await initBlockLeftData(groupId, userId);
-  blockLeftDict[groupId][userId] = false;
-  await db.put(blockLeftKey, blockLeftDict);
+  blockLeftDict[groupId][userId] = flag;
+  await db.put(blockFlagKey, blockLeftDict);
 }
 
 async function initBlockData(groupId, userId) {
@@ -127,13 +127,13 @@ const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖', async (sessio
   const userId = session.user_id;
 
   try {
-    const blockLeft = await getBlockLeft(groupId, userId);
+    const blockLeft = await getBlockFlag(groupId, userId);
     if (blockLeft === false) {
       session.send(
         `[CQ:at,qq=${userId}] 你已经抽过闷砖了`);
     } else {
-      await decBlockLeft(groupId, userId);
-      await addBlock(groupId, userId, parseInt(Math.random() * 6, 10) + 1);
+      await markBlockFlag(groupId, userId, false);
+      await addBlock(groupId, userId, parseInt(Math.random() * 8, 10) + 1);
       const userBlock = await getBlock(groupId, userId);
       session.send(
         `[CQ:at,qq=${userId}] 呐~刚烧好的闷砖🧱\n目前你有${userBlock}块闷砖。`);
@@ -190,7 +190,5 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
 
   }
 });
-
-// const qmz = new CommandHandler('敲闷砖', '使用闷砖', (session) => {})
 
 module.exports = [cmz, qmz, recordHandler];
