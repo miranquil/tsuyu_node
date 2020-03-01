@@ -11,6 +11,7 @@
   "author": "Yorushika Wisteria",
   "license": "GPL-3.0",
   "dependencies": {
+    "bent": "^7.1.0",
     "express": "^4.17.1",
     "express-ws": "^4.0.0",
     "level": "^6.0.0",
