@@ -138,7 +138,7 @@ const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖', async (sessio
     if (blockLeft === false) {
       const userBlock = await getBlock(groupId, userId);
       session.send(
-        `[CQ:at,qq=${userId}] 你已经抽过闷砖了！n目前你有${userBlock}块闷砖。`);
+        `[CQ:at,qq=${userId}] 你已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
     } else {
       await markBlockFlag(groupId, userId, false);
       await addBlock(groupId, userId, parseInt(Math.random() * 8, 10) + 1);
