@@ -140,11 +140,12 @@ const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖', async (sessio
       session.send(
         `[CQ:at,qq=${userId}] 你已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
     } else {
+      const rdBLockCount = parseInt(Math.random() * 8, 10) + 1;
       await markBlockFlag(groupId, userId, false);
-      await addBlock(groupId, userId, parseInt(Math.random() * 8, 10) + 1);
+      await addBlock(groupId, userId, rdBLockCount);
       const userBlock = await getBlock(groupId, userId);
       session.send(
-        `[CQ:at,qq=${userId}] 呐~刚烧好的闷砖🧱\n目前你有${userBlock}块闷砖。`);
+        `[CQ:at,qq=${userId}] 呐~刚烧好的${rdBLockCount}块闷砖🧱\n目前你有${userBlock}块闷砖。`);
     }
   } catch (e) {
     session.send('操作失败');
