@@ -290,7 +290,7 @@ const immuneBlock = new CommandHandler('imz', [], '免疫闷砖', async (session
         if (immuneFlag === false) {
           session.send(`[CQ:at,qq=${userId}] 已经解除免疫闷砖`);
         } else {
-          await setBlockImmuneData(groupId, userId, true);
+          await setBlockImmuneData(groupId, userId, false);
           session.send(`[CQ:at,qq=${userId}] 解除免疫闷砖成功`);
         }
       }
