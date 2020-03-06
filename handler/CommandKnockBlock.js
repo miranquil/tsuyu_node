@@ -280,18 +280,18 @@ const immuneBlock = new CommandHandler('imz', [], '免疫闷砖', async (session
       } else if (session.params[0] === 'on') {
         const immuneFlag = await getBlockImmuneData(groupId, userId);
         if (immuneFlag) {
-          session.send(`[CQ:at,qq=${userId}]已经免疫闷砖`);
+          session.send(`[CQ:at,qq=${userId}] 已经免疫闷砖`);
         } else {
           await setBlockImmuneData(groupId, userId, true);
-          session.send(`[CQ:at,qq=${userId}]免疫闷砖成功`);
+          session.send(`[CQ:at,qq=${userId}] 免疫闷砖成功`);
         }
       } else {
         const immuneFlag = await getBlockImmuneData(groupId, userId);
         if (immuneFlag === false) {
-          session.send(`[CQ:at,qq=${userId}]已经解除免疫闷砖`);
+          session.send(`[CQ:at,qq=${userId}] 已经解除免疫闷砖`);
         } else {
           await setBlockImmuneData(groupId, userId, true);
-          session.send(`[CQ:at,qq=${userId}]解除免疫闷砖成功`);
+          session.send(`[CQ:at,qq=${userId}] 解除免疫闷砖成功`);
         }
       }
     }
