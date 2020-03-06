@@ -172,7 +172,7 @@ const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖（早晚八点�
 
     const immuneFlag = await getBlockImmuneData(groupId, userId);
     if (immuneFlag) {
-      session.send('必须解除免疫才能抽闷砖！');
+      session.send('[CQ:at,qq=${userId}] 必须解除免疫才能抽闷砖！');
       return undefined;
     }
 
@@ -206,7 +206,7 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
 
     let immuneFlag = await getBlockImmuneData(groupId, userId);
     if (immuneFlag) {
-      session.send('必须解除免疫才能敲闷砖！');
+      session.send('[CQ:at,qq=${userId}] 必须解除免疫才能敲闷砖！');
       return undefined;
     }
 
@@ -217,7 +217,7 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
       const targetId = groupLastUser[groupId][0];
       immuneFlag = await getBlockImmuneData(groupId, targetId);
       if (immuneFlag) {
-        session.send(`[CQ:at,qq=${userId}]那单位对闷砖免疫`);
+        session.send(`[CQ:at,qq=${userId}] 那单位对闷砖免疫`);
         return undefined;
       }
       if (targetId === userId) {
