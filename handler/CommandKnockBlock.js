@@ -174,7 +174,7 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
         const rndKey = parseInt(Math.random() * 100, 10);
         if (rndKey < 15) {
           await subBlock(groupId, userId);
-          session.send(`[CQ:at,qq=${userId}] 不小心手滑了甩飞了闷砖！`);
+          session.send(`[CQ:at,qq=${userId}] 手滑甩飞了闷砖！`);
         } else if (rndKey < 30) {
           await subBlock(groupId, userId);
           await addBlock(groupId, targetId);
@@ -191,6 +191,11 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
             session.send(
               `[CQ:at,qq=${userId}] 对 [CQ:at,qq=${targetId}] 狠狠来了一记闷砖！`);
           }
+        } else if (rndKey < 75) {
+          await subBlock(groupId, userId);
+          session.api.set_group_ban(session.ws, groupId, targetId, 60);
+          session.api.set_group_ban(session.ws, groupId, userId, 60);
+          session.send(`[CQ:at,qq=${targetId}] 的头太硬了！闷砖反弹回去砸到了 [CQ:at,qq=${userId}] 的头上！`)
         } else {
           await subBlock(groupId, userId);
           session.api.set_group_ban(session.ws, groupId, userId, 60);
