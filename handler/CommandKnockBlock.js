@@ -273,6 +273,7 @@ const immuneBlock = new CommandHandler('imz', [], '免疫闷砖', async (session
       if (session.params.length === 0) {
         session.send(`免疫闷砖
     命令格式: .imz on/off
+    激活免疫后将不会被其他人敲闷砖，但自身也将无法抽闷砖或敲闷砖。
     仅针对当前群有效，默认全员不免疫`);
       } else if (['on', 'off'].indexOf(session.params[0]) === -1) {
         session.send('非法参数');
