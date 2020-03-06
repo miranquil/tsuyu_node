@@ -126,7 +126,7 @@ const recordHandler = new OtherHandler('KBRecorder', async (session) => {
   }
 });
 
-const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖', async (session) => {
+const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖（早晚八点刷新）', async (session) => {
   if (session.message_type !== 'group') {
     return undefined;
   }
