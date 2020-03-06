@@ -9,6 +9,7 @@ let groupLastUser = {};
 
 const blockCountDbKey = 'KnockBlockCount';
 const blockFlagKey = 'KnockBlockLeft';
+const blockImmuneKey = 'KnockBlockImmune';
 
 // blockCountDb: [group][user]: count
 
@@ -21,6 +22,41 @@ const scheduleTaskAtTwenty = schedule.scheduleJob('0 0 20 * * *', async () => {
   await db.put(blockFlagKey, {});
   logger.info('KBR refreshed.');
 });
+
+async function initBlockImmuneData(groupId, userId) {
+  try {
+    const blockImmuneDict = await db.get(blockImmuneKey);
+    if (blockImmuneDict[groupId]) {
+      if (blockImmuneDict[groupId][userId] === undefined) {
+        blockImmuneDict[groupId][userId] = false;
+      }
+    } else {
+      blockImmuneDict[groupId] = {};
+      blockImmuneDict[groupId][userId] = false;
+    }
+    await db.put(blockImmuneKey, blockImmuneDict);
+    return blockImmuneDict;
+  } catch (e) {
+    if (e.notFound) {
+      const blockImmuneDict = {};
+      blockImmuneDict[groupId] = {};
+      blockImmuneDict[groupId][userId] = false;
+      await db.put(blockImmuneKey, blockImmuneDict);
+      return blockImmuneDict;
+    }
+  }
+}
+
+async function getBlockImmuneData(groupId, userId) {
+  const blockImmuneDict = await initBlockImmuneData(groupId, userId);
+  return blockImmuneDict[groupId][userId];
+}
+
+async function setBlockImmuneData(groupId, userId, value) {
+  const blockImmuneDict = await initBlockImmuneData(groupId, userId);
+  blockImmuneDict[groupId][userId] = value;
+  await db.put(blockImmuneKey, blockImmuneDict);
+}
 
 async function initBlockLeftData(groupId, userId) {
   try {
@@ -126,32 +162,39 @@ const recordHandler = new OtherHandler('KBRecorder', async (session) => {
   }
 });
 
-const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖（早晚八点刷新）', async (session) => {
-  if (session.message_type !== 'group') {
-    return undefined;
-  }
-  const groupId = session.group_id;
-  const userId = session.user_id;
-
-  try {
-    const blockLeft = await getBlockFlag(groupId, userId);
-    if (blockLeft === false) {
-      const userBlock = await getBlock(groupId, userId);
-      session.send(
-        `[CQ:at,qq=${userId}] 你已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
-    } else {
-      const rdBLockCount = parseInt(Math.random() * 8, 10) + 1;
-      await markBlockFlag(groupId, userId, false);
-      await addBlock(groupId, userId, rdBLockCount);
-      const userBlock = await getBlock(groupId, userId);
-      session.send(
-        `[CQ:at,qq=${userId}] 呐~刚烧好的${rdBLockCount}块闷砖🧱\n目前你有${userBlock}块闷砖。`);
+const cmz = new CommandHandler('cmz', '抽闷砖', '获得闷砖（早晚八点刷新）',
+  async (session) => {
+    if (session.message_type !== 'group') {
+      return undefined;
     }
-  } catch (e) {
-    session.send('操作失败');
-    throw e;
-  }
-});
+    const groupId = session.group_id;
+    const userId = session.user_id;
+
+    const immuneFlag = await getBlockImmuneData(groupId, userId);
+    if (immuneFlag) {
+      session.send('必须解除免疫才能抽闷砖！');
+      return undefined;
+    }
+
+    try {
+      const blockLeft = await getBlockFlag(groupId, userId);
+      if (blockLeft === false) {
+        const userBlock = await getBlock(groupId, userId);
+        session.send(
+          `[CQ:at,qq=${userId}] 你已经抽过闷砖了！\n目前你有${userBlock}块闷砖。`);
+      } else {
+        const rdBLockCount = parseInt(Math.random() * 8, 10) + 1;
+        await markBlockFlag(groupId, userId, false);
+        await addBlock(groupId, userId, rdBLockCount);
+        const userBlock = await getBlock(groupId, userId);
+        session.send(
+          `[CQ:at,qq=${userId}] 呐~刚烧好的${rdBLockCount}块闷砖🧱\n目前你有${userBlock}块闷砖。`);
+      }
+    } catch (e) {
+      session.send('操作失败');
+      throw e;
+    }
+  });
 
 const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (session) => {
   try {
@@ -161,11 +204,22 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
     const groupId = session.group_id;
     const userId = session.user_id;
 
+    let immuneFlag = await getBlockImmuneData(groupId, userId);
+    if (immuneFlag) {
+      session.send('必须解除免疫才能敲闷砖！');
+      return undefined;
+    }
+
     const userBlockCount = await getBlock(groupId, userId);
     if (userBlockCount === 0) {
       session.send(`[CQ:at,qq=${userId}] 你已经没有闷砖了！`);
     } else {
       const targetId = groupLastUser[groupId][0];
+      immuneFlag = await getBlockImmuneData(groupId, targetId);
+      if (immuneFlag) {
+        session.send(`[CQ:at,qq=${userId}]那单位对闷砖免疫`);
+        return undefined;
+      }
       if (targetId === userId) {
         await subBlock(groupId, userId);
         session.api.set_group_ban(session.ws, groupId, userId, 60);
@@ -195,12 +249,48 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
           await subBlock(groupId, userId);
           session.api.set_group_ban(session.ws, groupId, targetId, 60);
           session.api.set_group_ban(session.ws, groupId, userId, 60);
-          session.send(`[CQ:at,qq=${targetId}] 的头太硬了！闷砖反弹回去砸到了 [CQ:at,qq=${userId}] 的头上！`)
+          session.send(
+            `[CQ:at,qq=${targetId}] 的头太硬了！闷砖反弹回去砸到了 [CQ:at,qq=${userId}] 的头上！`);
         } else {
           await subBlock(groupId, userId);
           session.api.set_group_ban(session.ws, groupId, userId, 60);
           session.send(
             `[CQ:at,qq=${userId}] 不小心被发现了！被 [CQ:at,qq=${targetId}] 夺走了闷砖并狠狠来了一记！`);
+        }
+      }
+    }
+  } catch (e) {
+    session.send('操作失败');
+    throw e;
+  }
+});
+
+const immuneBlock = new CommandHandler('imz', [], '免疫闷砖', async (session) => {
+  try {
+    if (session.message_type === 'group') {
+      const groupId = session.group_id;
+      const userId = session.user_id;
+      if (session.params.length === 0) {
+        session.send(`免疫闷砖
+    命令格式: .imz on/off
+    仅针对当前群有效，默认全员不免疫`);
+      } else if (['on', 'off'].indexOf(session.params[0]) === -1) {
+        session.send('非法参数');
+      } else if (session.params[0] === 'on') {
+        const immuneFlag = await getBlockImmuneData(groupId, userId);
+        if (immuneFlag) {
+          session.send(`[CQ:at,qq=${userId}]已经免疫闷砖`);
+        } else {
+          await setBlockImmuneData(groupId, userId, true);
+          session.send(`[CQ:at,qq=${userId}]免疫闷砖成功`);
+        }
+      } else {
+        const immuneFlag = await getBlockImmuneData(groupId, userId);
+        if (immuneFlag === false) {
+          session.send(`[CQ:at,qq=${userId}]已经解除免疫闷砖`);
+        } else {
+          await setBlockImmuneData(groupId, userId, true);
+          session.send(`[CQ:at,qq=${userId}]解除免疫闷砖成功`);
         }
       }
     }
@@ -250,4 +340,4 @@ const setBlockCommandHandler = new CommandHandler('set_block', '', '修改闷砖
 
 setBlockCommandHandler.needAdmin = true;
 
-module.exports = [cmz, qmz, recordHandler, setBlockCommandHandler];
+module.exports = [cmz, qmz, immuneBlock, recordHandler, setBlockCommandHandler];
