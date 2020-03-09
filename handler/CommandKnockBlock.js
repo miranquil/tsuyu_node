@@ -204,61 +204,81 @@ const qmz = new CommandHandler('qmz', '敲闷砖', '使用闷砖', async (sessio
     const groupId = session.group_id;
     const userId = session.user_id;
 
-    let immuneFlag = await getBlockImmuneData(groupId, userId);
-    if (immuneFlag) {
-      session.send('[CQ:at,qq=${userId}] 必须解除免疫才能敲闷砖！');
-      return undefined;
-    }
+    const targetId = groupLastUser[groupId][0];
 
-    const userBlockCount = await getBlock(groupId, userId);
-    if (userBlockCount === 0) {
-      session.send(`[CQ:at,qq=${userId}] 你已经没有闷砖了！`);
-    } else {
-      const targetId = groupLastUser[groupId][0];
-      immuneFlag = await getBlockImmuneData(groupId, targetId);
-      if (immuneFlag) {
-        session.send(`[CQ:at,qq=${userId}] 那单位对闷砖免疫`);
+    if (session.params.length !== 0) {
+      if (session.params[0] !== 'self') {
+        session.send('非法参数');
         return undefined;
       }
-      if (targetId === userId) {
-        await subBlock(groupId, userId);
-        session.api.set_group_ban(session.ws, groupId, userId, 60);
-        session.send(`[CQ:at,qq=${userId}] 对着自己脑袋狠狠来了一记闷砖！`);
+      if (session.params.length === 1) {
+        api.set_group_ban(session.ws, groupId, userId, 60);
+        session.send(`[CQ:at,qq=${userId}] 自闷了！`);
+      } else if (Number.isNaN(parseInt(session.params[1], 10))) {
+        session.send('非法参数');
       } else {
-        const rndKey = parseInt(Math.random() * 100, 10);
-        if (rndKey < 15) {
+        const banTime = parseInt(session.params[1], 10);
+        api.set_group_ban(session.ws, groupId, userId, banTime);
+        session.send(`[CQ:at,qq=${userId}] 召唤妖砖敲了自己${banTime}下！`);
+      }
+    } else {
+      let immuneFlag = await getBlockImmuneData(groupId, userId);
+      if (immuneFlag) {
+        session.send('[CQ:at,qq=${userId}] 必须解除免疫才能敲闷砖！');
+        return undefined;
+      }
+
+      const userBlockCount = await getBlock(groupId, userId);
+      if (userBlockCount === 0) {
+        session.send(`[CQ:at,qq=${userId}] 你已经没有闷砖了！`);
+      } else {
+        immuneFlag = await getBlockImmuneData(groupId, targetId);
+        if (immuneFlag) {
+          session.send(`[CQ:at,qq=${userId}] 那单位对闷砖免疫`);
+          return undefined;
+        }
+        if (targetId === userId) {
           await subBlock(groupId, userId);
-          session.send(`[CQ:at,qq=${userId}] 手滑甩飞了闷砖！`);
-        } else if (rndKey < 30) {
-          await subBlock(groupId, userId);
-          await addBlock(groupId, targetId);
-          session.send(
-            `[CQ:at,qq=${userId}] 没抓稳，闷砖掉在地上被 [CQ:at,qq=${targetId}] 捡走了！`);
-        } else if (rndKey < 65) {
-          const adminFlag = await api.get_group_member_info(groupId, targetId);
-          if (['admin', 'owner'].indexOf(adminFlag.role) !== -1) {
+          session.api.set_group_ban(session.ws, groupId, userId, 60);
+          session.send(`[CQ:at,qq=${userId}] 对着自己脑袋狠狠来了一记闷砖！`);
+        } else {
+          const rndKey = parseInt(Math.random() * 100, 10);
+          if (rndKey < 15) {
             await subBlock(groupId, userId);
-            session.send(`[CQ:at,qq=${userId}] 手里的闷砖突然变成了豆腐块！`);
-          } else {
+            session.send(`[CQ:at,qq=${userId}] 手滑甩飞了闷砖！`);
+          } else if (rndKey < 30) {
+            await subBlock(groupId, userId);
+            await addBlock(groupId, targetId);
+            session.send(
+              `[CQ:at,qq=${userId}] 没抓稳，闷砖掉在地上被 [CQ:at,qq=${targetId}] 捡走了！`);
+          } else if (rndKey < 65) {
+            const adminFlag = await api.get_group_member_info(groupId,
+              targetId);
+            if (['admin', 'owner'].indexOf(adminFlag.role) !== -1) {
+              await subBlock(groupId, userId);
+              session.send(`[CQ:at,qq=${userId}] 手里的闷砖突然变成了豆腐块！`);
+            } else {
+              await subBlock(groupId, userId);
+              session.api.set_group_ban(session.ws, groupId, targetId, 60);
+              session.send(
+                `[CQ:at,qq=${userId}] 对 [CQ:at,qq=${targetId}] 狠狠来了一记闷砖！`);
+            }
+          } else if (rndKey < 75) {
             await subBlock(groupId, userId);
             session.api.set_group_ban(session.ws, groupId, targetId, 60);
+            session.api.set_group_ban(session.ws, groupId, userId, 60);
             session.send(
-              `[CQ:at,qq=${userId}] 对 [CQ:at,qq=${targetId}] 狠狠来了一记闷砖！`);
+              `[CQ:at,qq=${targetId}] 的头太硬了！闷砖反弹回去砸到了 [CQ:at,qq=${userId}] 的头上！`);
+          } else {
+            await subBlock(groupId, userId);
+            session.api.set_group_ban(session.ws, groupId, userId, 60);
+            session.send(
+              `[CQ:at,qq=${userId}] 不小心被发现了！被 [CQ:at,qq=${targetId}] 夺走了闷砖并狠狠来了一记！`);
           }
-        } else if (rndKey < 75) {
-          await subBlock(groupId, userId);
-          session.api.set_group_ban(session.ws, groupId, targetId, 60);
-          session.api.set_group_ban(session.ws, groupId, userId, 60);
-          session.send(
-            `[CQ:at,qq=${targetId}] 的头太硬了！闷砖反弹回去砸到了 [CQ:at,qq=${userId}] 的头上！`);
-        } else {
-          await subBlock(groupId, userId);
-          session.api.set_group_ban(session.ws, groupId, userId, 60);
-          session.send(
-            `[CQ:at,qq=${userId}] 不小心被发现了！被 [CQ:at,qq=${targetId}] 夺走了闷砖并狠狠来了一记！`);
         }
       }
     }
+
   } catch (e) {
     session.send('操作失败');
     throw e;
